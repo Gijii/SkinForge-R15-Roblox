@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * ROBLOX CRAFTER PRO - NO TEMPLATE (script.js)
- * Motor 3D independiente sin necesidad de cargar imágenes de plantilla base.
+ * ROBLOX CRAFTER PRO
+ * Motor 3D independiente, forzado a resolución oficial (585x559) @xfixiii en roblox
  * ============================================================================
  */
 
@@ -14,17 +14,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const adjustmentsPanel = document.getElementById('adjustmentsPanel');
     const inputImagen = document.getElementById('subirImagen');
     const btnAddLayer = document.getElementById('btnAddLayer');
+    const btnCamisa = document.getElementById('btnCamisa');
+    const btnPantalon = document.getElementById('btnPantalon');
     const layersList = document.getElementById('layersList');
     const btnDescargar = document.getElementById('btnDescargar');
     const btnReset = document.getElementById('btnReset');
 
     let layers = []; 
     let selectedLayerIndex = -1;
+    window.tipoPrenda = 'Capa'; // Variable para saber si es camisa o pantalón
 
     function init() {
+        // 1. FORZAR LA RESOLUCIÓN OFICIAL DE ROBLOX
+        canvas2D.width = 585;
+        canvas2D.height = 559;
+
         init3D(); 
         setupEventListeners();
-        actualizarTextura3D(); // Cargamos la textura inicial inmediatamente
+        actualizarTextura3D(); 
     }
 
     function init3D() {
@@ -69,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
         texture.magFilter = THREE.LinearFilter;
 
         const loader = new THREE.OBJLoader();
-        // Asegúrate de poner aquí el nombre de tu modelo R6 o blocky-r15.obj
         loader.load('blocky-r15.obj', (obj) => {
             model = obj;
             model.traverse((child) => {
@@ -107,13 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCanvas2D(modo = '3D') {
         ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
         
-        // Fondo de piel para el visor 3D
         if (modo === '3D') {
-            ctx2D.fillStyle = '#e2b99a'; 
+            ctx2D.fillStyle = '#e2b99a'; // Color piel
             ctx2D.fillRect(0, 0, canvas2D.width, canvas2D.height);
         }
 
-        // Capas de ropa del usuario
         ctx2D.globalCompositeOperation = 'source-over';
         layers.forEach(layer => {
             if (!layer.visible) return;
@@ -132,14 +136,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupEventListeners() {
-        btnAddLayer.addEventListener('click', () => inputImagen.click());
+        // Eventos Botones Camisa / Pantalón
+        if (btnCamisa) {
+            btnCamisa.addEventListener('click', () => {
+                window.tipoPrenda = '👕 Camisa';
+                inputImagen.click();
+            });
+        }
+
+        if (btnPantalon) {
+            btnPantalon.addEventListener('click', () => {
+                window.tipoPrenda = '👖 Pantalón';
+                inputImagen.click();
+            });
+        }
+
+        if (btnAddLayer) {
+            btnAddLayer.addEventListener('click', () => {
+                window.tipoPrenda = 'Capa';
+                inputImagen.click();
+            });
+        }
         
         const dropZone = document.getElementById('dropZone');
         if (dropZone) {
             dropZone.addEventListener('dragover', (e) => e.preventDefault());
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                if (e.dataTransfer.files.length > 0) procesarNuevaCapa(e.dataTransfer.files[0]);
+                if (e.dataTransfer.files.length > 0) {
+                    window.tipoPrenda = 'Capa';
+                    procesarNuevaCapa(e.dataTransfer.files[0]);
+                }
             });
         }
 
@@ -167,14 +194,14 @@ document.addEventListener('DOMContentLoaded', () => {
             btnDescargar.addEventListener('click', () => {
                 if (layers.length === 0) return alert("Agrega al menos una textura antes de descargar.");
                 
-                renderCanvas2D('descarga'); 
+                renderCanvas2D('descarga'); // Transparente
                 
                 const a = document.createElement('a');
                 a.download = "Ropa_Roblox_Transparente.png";
                 a.href = canvas2D.toDataURL('image/png');
                 a.click();
                 
-                actualizarTextura3D();
+                actualizarTextura3D(); // Vuelve a poner el color de piel
             });
         }
 
@@ -200,14 +227,19 @@ document.addEventListener('DOMContentLoaded', () => {
             img.onload = () => {
                 layers.push({
                     img: img,
-                    name: file.name.substring(0, 15),
-                    visible: true, scale: 100, posX: 0, posY: 0
+                    name: `${window.tipoPrenda} - ${file.name.substring(0, 10)}`,
+                    visible: true, 
+                    scale: 100, 
+                    posX: 0, 
+                    posY: 0
                 });
                 selectedLayerIndex = layers.length - 1;
                 if (adjustmentsPanel) adjustmentsPanel.classList.remove('hidden');
                 actualizarInterfazCapas();
                 sincronizarSliders(layers[selectedLayerIndex]);
                 actualizarTextura3D();
+                
+                window.tipoPrenda = 'Capa'; // Reiniciar
             };
             img.src = e.target.result;
         };
