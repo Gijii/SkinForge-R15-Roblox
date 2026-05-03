@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * ROBLOX CRAFTER PRO
- * Motor 3D independiente, forzado a resolución oficial (585x559) @xfixiii en roblox
+ * ROBLOX CRAFTER PRO - SCRIPT.JS COMPLETO Y DEFINITIVO
+ * Eje UV corregido (flipY) y posicionamiento absoluto (sin centrado forzado).
  * ============================================================================
  */
 
@@ -22,10 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let layers = []; 
     let selectedLayerIndex = -1;
-    window.tipoPrenda = 'Capa'; // Variable para saber si es camisa o pantalón
+    window.tipoPrenda = 'Capa'; 
 
     function init() {
-        // 1. FORZAR LA RESOLUCIÓN OFICIAL DE ROBLOX
+        // FORZAR LA RESOLUCIÓN OFICIAL DE ROBLOX
         canvas2D.width = 585;
         canvas2D.height = 559;
 
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderCanvas2D('3D'); 
         texture = new THREE.CanvasTexture(canvas2D);
-        texture.flipY = false; 
+        texture.flipY = true; // Inversión vertical corregida
         texture.minFilter = THREE.LinearFilter; 
         texture.magFilter = THREE.LinearFilter;
 
@@ -122,10 +122,20 @@ document.addEventListener('DOMContentLoaded', () => {
         layers.forEach(layer => {
             if (!layer.visible) return;
             const scale = layer.scale / 100;
-            const w = canvas2D.width * scale;
-            const h = canvas2D.height * scale;
-            const x = (canvas2D.width - w) / 2 + layer.posX;
-            const y = (canvas2D.height - h) / 2 + layer.posY;
+            
+            let w = canvas2D.width * scale;
+            let h = canvas2D.height * scale;
+
+            if (layer.img.naturalWidth !== 585 || layer.img.naturalHeight !== 559) {
+                w = layer.img.naturalWidth * scale;
+                h = layer.img.naturalHeight * scale;
+            }
+
+            // CORRECCIÓN MAGISTRAL: Coordenadas absolutas desde la esquina (0,0)
+            // Eliminado el centrado forzado
+            const x = layer.posX;
+            const y = layer.posY;
+            
             ctx2D.drawImage(layer.img, x, y, w, h);
         });
     }
@@ -136,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupEventListeners() {
-        // Eventos Botones Camisa / Pantalón
         if (btnCamisa) {
             btnCamisa.addEventListener('click', () => {
                 window.tipoPrenda = '👕 Camisa';
@@ -194,14 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
             btnDescargar.addEventListener('click', () => {
                 if (layers.length === 0) return alert("Agrega al menos una textura antes de descargar.");
                 
-                renderCanvas2D('descarga'); // Transparente
+                renderCanvas2D('descarga'); 
                 
                 const a = document.createElement('a');
                 a.download = "Ropa_Roblox_Transparente.png";
                 a.href = canvas2D.toDataURL('image/png');
                 a.click();
                 
-                actualizarTextura3D(); // Vuelve a poner el color de piel
+                actualizarTextura3D(); 
             });
         }
 
@@ -225,21 +234,28 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
+                // SUGERENCIA APLICADA: Si es pantalón y está recortado, lo baja un poco automáticamente
+                let posicionYInicial = 0;
+                if (window.tipoPrenda.includes('Pantalón') && img.naturalHeight < 500) {
+                    posicionYInicial = 150;
+                }
+
                 layers.push({
                     img: img,
                     name: `${window.tipoPrenda} - ${file.name.substring(0, 10)}`,
                     visible: true, 
                     scale: 100, 
                     posX: 0, 
-                    posY: 0
+                    posY: posicionYInicial
                 });
+                
                 selectedLayerIndex = layers.length - 1;
                 if (adjustmentsPanel) adjustmentsPanel.classList.remove('hidden');
                 actualizarInterfazCapas();
                 sincronizarSliders(layers[selectedLayerIndex]);
                 actualizarTextura3D();
                 
-                window.tipoPrenda = 'Capa'; // Reiniciar
+                window.tipoPrenda = 'Capa'; 
             };
             img.src = e.target.result;
         };
