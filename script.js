@@ -1,3 +1,10 @@
+/**
+ * ============================================================================
+ * ROBLOX CRAFTER PRO - NO TEMPLATE (script.js)
+ * Motor 3D independiente sin necesidad de cargar imágenes de plantilla base.
+ * ============================================================================
+ */
+
 document.addEventListener('DOMContentLoaded', () => {
     let scene, camera, renderer, model, controls, texture;
     const container = document.getElementById('container3D');
@@ -13,13 +20,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let layers = []; 
     let selectedLayerIndex = -1;
-    const plantillaImg = new Image();
-    plantillaImg.src = 'plantilla.png'; 
 
     function init() {
         init3D(); 
         setupEventListeners();
-        plantillaImg.onload = () => actualizarTextura3D();
+        actualizarTextura3D(); // Cargamos la textura inicial inmediatamente
     }
 
     function init3D() {
@@ -64,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
         texture.magFilter = THREE.LinearFilter;
 
         const loader = new THREE.OBJLoader();
+        // Asegúrate de poner aquí el nombre de tu modelo R6 o blocky-r15.obj
         loader.load('blocky-r15.obj', (obj) => {
             model = obj;
             model.traverse((child) => {
@@ -101,11 +107,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCanvas2D(modo = '3D') {
         ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
         
+        // Fondo de piel para el visor 3D
         if (modo === '3D') {
             ctx2D.fillStyle = '#e2b99a'; 
             ctx2D.fillRect(0, 0, canvas2D.width, canvas2D.height);
         }
 
+        // Capas de ropa del usuario
         ctx2D.globalCompositeOperation = 'source-over';
         layers.forEach(layer => {
             if (!layer.visible) return;
@@ -116,13 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const y = (canvas2D.height - h) / 2 + layer.posY;
             ctx2D.drawImage(layer.img, x, y, w, h);
         });
-
-        if (modo === '3D' && plantillaImg.complete && plantillaImg.naturalWidth !== 0) {
-            ctx2D.globalCompositeOperation = 'multiply';
-            ctx2D.drawImage(plantillaImg, 0, 0, 585, 559);
-        }
-
-        ctx2D.globalCompositeOperation = 'source-over';
     }
 
     function actualizarTextura3D() {
