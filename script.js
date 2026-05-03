@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * ROBLOX CRAFTER PRO - SCRIPT.JS COMPLETO Y DEFINITIVO
- * Eje UV corregido (flipY) y posicionamiento absoluto (sin centrado forzado).
+ * Auto-Anclaje inteligente (Smart Snapping) y flipY corregido.
  * ============================================================================
  */
 
@@ -71,7 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderCanvas2D('3D'); 
         texture = new THREE.CanvasTexture(canvas2D);
-        texture.flipY = true; // Inversión vertical corregida
+        
+        // CORRECCIÓN VITAL: El mapa debe estar al derecho para no manchar la cara
+        texture.flipY = false; 
+        
         texture.minFilter = THREE.LinearFilter; 
         texture.magFilter = THREE.LinearFilter;
 
@@ -114,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
         
         if (modo === '3D') {
-            ctx2D.fillStyle = '#e2b99a'; // Color piel
+            ctx2D.fillStyle = '#e2b99a'; // Color piel limpio
             ctx2D.fillRect(0, 0, canvas2D.width, canvas2D.height);
         }
 
@@ -125,16 +128,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let w = canvas2D.width * scale;
             let h = canvas2D.height * scale;
+            let baseOffsetX = 0;
+            let baseOffsetY = 0;
 
+            // SISTEMA DE AUTO-ANCLAJE (Igual que Customuse)
             if (layer.img.naturalWidth !== 585 || layer.img.naturalHeight !== 559) {
                 w = layer.img.naturalWidth * scale;
                 h = layer.img.naturalHeight * scale;
+                
+                // Centrar horizontalmente siempre
+                baseOffsetX = (canvas2D.width - w) / 2;
+
+                // Si es pantalón y está recortado, lo pega al fondo del lienzo (piernas)
+                if (layer.name.includes('Pantalón')) {
+                    baseOffsetY = canvas2D.height - h;
+                }
             }
 
-            // CORRECCIÓN MAGISTRAL: Coordenadas absolutas desde la esquina (0,0)
-            // Eliminado el centrado forzado
-            const x = layer.posX;
-            const y = layer.posY;
+            // Los sliders del usuario funcionan como un ajuste fino
+            const x = baseOffsetX + layer.posX;
+            const y = baseOffsetY + layer.posY;
             
             ctx2D.drawImage(layer.img, x, y, w, h);
         });
@@ -234,19 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                // SUGERENCIA APLICADA: Si es pantalón y está recortado, lo baja un poco automáticamente
-                let posicionYInicial = 0;
-                if (window.tipoPrenda.includes('Pantalón') && img.naturalHeight < 500) {
-                    posicionYInicial = 150;
-                }
-
                 layers.push({
                     img: img,
                     name: `${window.tipoPrenda} - ${file.name.substring(0, 10)}`,
                     visible: true, 
                     scale: 100, 
                     posX: 0, 
-                    posY: posicionYInicial
+                    posY: 0
                 });
                 
                 selectedLayerIndex = layers.length - 1;
