@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * ROBLOX CRAFTER PRO - SCRIPT.JS COMPLETO Y DEFINITIVO
- * Auto-Anclaje inteligente (Smart Snapping) y flipY corregido.
+ * ROBLOX CRAFTER PRO -
+ * Estándar Oficial R15/R6 + DevForum UV Map Knowledge Integrado. @xfixiii en roblox
  * ============================================================================
  */
 
@@ -24,8 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedLayerIndex = -1;
     window.tipoPrenda = 'Capa'; 
 
+    // CONOCIMIENTO DEL DEVFORUM: Coordenadas UV exactas de las caras frontales
+    const ROBLOX_UV_MAP = {
+        TORSO_FRONT: { x: 232, y: 74, w: 128, h: 128 },
+        RIGHT_LEG_FRONT: { x: 73, y: 285, w: 64, h: 128 },
+        LEFT_LEG_FRONT: { x: 393, y: 285, w: 64, h: 128 }
+    };
+
     function init() {
-        // FORZAR LA RESOLUCIÓN OFICIAL DE ROBLOX
+        // LIENZO SAGRADO DE ROBLOX
         canvas2D.width = 585;
         canvas2D.height = 559;
 
@@ -56,15 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
         controls.target.set(0, 0, 0);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-        
         const keyLight = new THREE.DirectionalLight(0xffffff, 1.2); 
         keyLight.position.set(5, 10, 7);
         scene.add(keyLight);
-        
         const fillLight = new THREE.DirectionalLight(0x88bbff, 0.6); 
         fillLight.position.set(-5, 0, -5);
         scene.add(fillLight);
-        
         const backLight = new THREE.DirectionalLight(0xffffff, 0.4); 
         backLight.position.set(0, 10, -10);
         scene.add(backLight);
@@ -72,14 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCanvas2D('3D'); 
         texture = new THREE.CanvasTexture(canvas2D);
         
-        // CORRECCIÓN VITAL: El mapa debe estar al derecho para no manchar la cara
+        // ESTÁNDAR ROBLOX: Lectura desde la esquina superior izquierda
         texture.flipY = false; 
         
         texture.minFilter = THREE.LinearFilter; 
         texture.magFilter = THREE.LinearFilter;
 
         const loader = new THREE.OBJLoader();
-        loader.load('blocky-r15.obj', (obj) => {
+        loader.load('blocky-r15.obj', (obj) => { 
             model = obj;
             model.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
@@ -107,49 +111,24 @@ document.addEventListener('DOMContentLoaded', () => {
         animate();
     }
 
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
-
     function renderCanvas2D(modo = '3D') {
         ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
         
         if (modo === '3D') {
-            ctx2D.fillStyle = '#e2b99a'; // Color piel limpio
+            ctx2D.fillStyle = '#e2b99a'; // Piel Dummy
             ctx2D.fillRect(0, 0, canvas2D.width, canvas2D.height);
         }
 
         ctx2D.globalCompositeOperation = 'source-over';
         layers.forEach(layer => {
             if (!layer.visible) return;
+            
             const scale = layer.scale / 100;
+            const w = layer.img.naturalWidth * scale;
+            const h = layer.img.naturalHeight * scale;
             
-            let w = canvas2D.width * scale;
-            let h = canvas2D.height * scale;
-            let baseOffsetX = 0;
-            let baseOffsetY = 0;
-
-            // SISTEMA DE AUTO-ANCLAJE (Igual que Customuse)
-            if (layer.img.naturalWidth !== 585 || layer.img.naturalHeight !== 559) {
-                w = layer.img.naturalWidth * scale;
-                h = layer.img.naturalHeight * scale;
-                
-                // Centrar horizontalmente siempre
-                baseOffsetX = (canvas2D.width - w) / 2;
-
-                // Si es pantalón y está recortado, lo pega al fondo del lienzo (piernas)
-                if (layer.name.includes('Pantalón')) {
-                    baseOffsetY = canvas2D.height - h;
-                }
-            }
-
-            // Los sliders del usuario funcionan como un ajuste fino
-            const x = baseOffsetX + layer.posX;
-            const y = baseOffsetY + layer.posY;
-            
-            ctx2D.drawImage(layer.img, x, y, w, h);
+            // Dibuja exactamente en las coordenadas X e Y sin alteraciones
+            ctx2D.drawImage(layer.img, layer.posX, layer.posY, w, h);
         });
     }
 
@@ -161,14 +140,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function setupEventListeners() {
         if (btnCamisa) {
             btnCamisa.addEventListener('click', () => {
-                window.tipoPrenda = '👕 Camisa';
+                window.tipoPrenda = 'Camisa';
                 inputImagen.click();
             });
         }
 
         if (btnPantalon) {
             btnPantalon.addEventListener('click', () => {
-                window.tipoPrenda = '👖 Pantalón';
+                window.tipoPrenda = 'Pantalon';
                 inputImagen.click();
             });
         }
@@ -247,13 +226,31 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
+                
+                let posXInicial = 0;
+                let posYInicial = 0;
+                let escalaInicial = 100;
+
+                // LÓGICA DEVFORUM: Auto-posicionamiento para logos/imágenes pequeñas
+                if (img.naturalWidth !== 585 || img.naturalHeight !== 559) {
+                    if (window.tipoPrenda === 'Camisa') {
+                        // Centrar en el mapa UV del Pecho Frontal
+                        posXInicial = ROBLOX_UV_MAP.TORSO_FRONT.x + (ROBLOX_UV_MAP.TORSO_FRONT.w / 2) - (img.naturalWidth / 2);
+                        posYInicial = ROBLOX_UV_MAP.TORSO_FRONT.y + (ROBLOX_UV_MAP.TORSO_FRONT.h / 2) - (img.naturalHeight / 2);
+                    } else if (window.tipoPrenda === 'Pantalon') {
+                        // Centrar en el mapa UV de la Pierna Derecha Frontal
+                        posXInicial = ROBLOX_UV_MAP.RIGHT_LEG_FRONT.x + (ROBLOX_UV_MAP.RIGHT_LEG_FRONT.w / 2) - (img.naturalWidth / 2);
+                        posYInicial = ROBLOX_UV_MAP.RIGHT_LEG_FRONT.y + (ROBLOX_UV_MAP.RIGHT_LEG_FRONT.h / 2) - (img.naturalHeight / 2);
+                    }
+                }
+
                 layers.push({
                     img: img,
                     name: `${window.tipoPrenda} - ${file.name.substring(0, 10)}`,
                     visible: true, 
-                    scale: 100, 
-                    posX: 0, 
-                    posY: 0
+                    scale: escalaInicial, 
+                    posX: posXInicial, 
+                    posY: posYInicial
                 });
                 
                 selectedLayerIndex = layers.length - 1;
@@ -332,8 +329,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const yV = document.getElementById('yV');
         
         if (sV) sV.textContent = `${l.scale}%`;
-        if (xV) xV.textContent = l.posX;
-        if (yV) yV.textContent = l.posY;
+        if (xV) xV.textContent = Math.round(l.posX);
+        if (yV) yV.textContent = Math.round(l.posY);
     }
 
     init();
