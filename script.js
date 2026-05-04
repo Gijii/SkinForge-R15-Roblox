@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * ROBLOX CRAFTER PRO -
- * Estándar Oficial R15/R6 + DevForum UV Map Knowledge Integrado. @xfixiii en roblox
+ * ROBLOX CRAFTER PRO - SCRIPT.JS COMPLETO Y DEFINITIVO
+ * Estándar Oficial R15/R6 + DevForum UV Map Knowledge Integrado.
  * ============================================================================
  */
 
@@ -109,6 +109,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         animate();
+    }
+
+    // EL MOTOR 3D RESTAURADO (¡Lo que faltaba!)
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
     }
 
     function renderCanvas2D(modo = '3D') {
