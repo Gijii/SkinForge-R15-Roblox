@@ -1,10 +1,3 @@
-/**
- * ============================================================================
- * ROBLOX CRAFTER PRO - SCRIPT.JS COMPLETO Y DEFINITIVO
- * Estándar Oficial R15/R6 + DevForum UV Map Knowledge Integrado.
- * ============================================================================
- */
-
 document.addEventListener('DOMContentLoaded', () => {
     let scene, camera, renderer, model, controls, texture;
     const container = document.getElementById('container3D');
@@ -24,7 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedLayerIndex = -1;
     window.tipoPrenda = 'Capa'; 
 
-    // CONOCIMIENTO DEL DEVFORUM: Coordenadas UV exactas de las caras frontales
     const ROBLOX_UV_MAP = {
         TORSO_FRONT: { x: 232, y: 74, w: 128, h: 128 },
         RIGHT_LEG_FRONT: { x: 73, y: 285, w: 64, h: 128 },
@@ -32,13 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     function init() {
-        // LIENZO SAGRADO DE ROBLOX
         canvas2D.width = 585;
         canvas2D.height = 559;
-
         init3D(); 
         setupEventListeners();
         actualizarTextura3D(); 
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        if (controls) controls.update();
+        if (renderer && scene && camera) renderer.render(scene, camera);
     }
 
     function init3D() {
@@ -75,10 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         renderCanvas2D('3D'); 
         texture = new THREE.CanvasTexture(canvas2D);
-        
-        // ESTÁNDAR ROBLOX: Lectura desde la esquina superior izquierda
         texture.flipY = false; 
-        
         texture.minFilter = THREE.LinearFilter; 
         texture.magFilter = THREE.LinearFilter;
 
@@ -111,18 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
         animate();
     }
 
-    // EL MOTOR 3D RESTAURADO (¡Lo que faltaba!)
-    function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-    }
-
     function renderCanvas2D(modo = '3D') {
         ctx2D.clearRect(0, 0, canvas2D.width, canvas2D.height);
         
         if (modo === '3D') {
-            ctx2D.fillStyle = '#e2b99a'; // Piel Dummy
+            ctx2D.fillStyle = '#e2b99a'; 
             ctx2D.fillRect(0, 0, canvas2D.width, canvas2D.height);
         }
 
@@ -134,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const w = layer.img.naturalWidth * scale;
             const h = layer.img.naturalHeight * scale;
             
-            // Dibuja exactamente en las coordenadas X e Y sin alteraciones
             ctx2D.drawImage(layer.img, layer.posX, layer.posY, w, h);
         });
     }
@@ -220,9 +205,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         window.addEventListener('resize', () => {
-            camera.aspect = container.clientWidth / container.clientHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(container.clientWidth, container.clientHeight);
+            if (camera && renderer && container) {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            }
         });
     }
 
@@ -233,19 +220,15 @@ document.addEventListener('DOMContentLoaded', () => {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                
                 let posXInicial = 0;
                 let posYInicial = 0;
                 let escalaInicial = 100;
 
-                // LÓGICA DEVFORUM: Auto-posicionamiento para logos/imágenes pequeñas
                 if (img.naturalWidth !== 585 || img.naturalHeight !== 559) {
                     if (window.tipoPrenda === 'Camisa') {
-                        // Centrar en el mapa UV del Pecho Frontal
                         posXInicial = ROBLOX_UV_MAP.TORSO_FRONT.x + (ROBLOX_UV_MAP.TORSO_FRONT.w / 2) - (img.naturalWidth / 2);
                         posYInicial = ROBLOX_UV_MAP.TORSO_FRONT.y + (ROBLOX_UV_MAP.TORSO_FRONT.h / 2) - (img.naturalHeight / 2);
                     } else if (window.tipoPrenda === 'Pantalon') {
-                        // Centrar en el mapa UV de la Pierna Derecha Frontal
                         posXInicial = ROBLOX_UV_MAP.RIGHT_LEG_FRONT.x + (ROBLOX_UV_MAP.RIGHT_LEG_FRONT.w / 2) - (img.naturalWidth / 2);
                         posYInicial = ROBLOX_UV_MAP.RIGHT_LEG_FRONT.y + (ROBLOX_UV_MAP.RIGHT_LEG_FRONT.h / 2) - (img.naturalHeight / 2);
                     }
